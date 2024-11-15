@@ -65,8 +65,40 @@
   </div>
 </template>
 
+
 <script>
-/* Vue component script */
+import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
+
+export default {
+  data() {
+    return {
+      uid: null, // Store the user ID if logged in
+    };
+  },
+  methods: {
+    logout() {
+      const auth = getAuth();
+      signOut(auth)
+        .then(() => {
+          this.uid = null;
+          this.$router.push('/'); // Redirect to home after logout
+        })
+        .catch((error) => {
+          console.error("Error logging out:", error);
+        });
+    },
+  },
+  mounted() {
+    const auth = getAuth();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        this.uid = user.uid; // Store the user ID when authenticated
+      } else {
+        this.uid = null; // Reset if user is not authenticated
+      }
+    });
+  },
+};
 </script>
 
 <style>

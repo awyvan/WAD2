@@ -1,4 +1,3 @@
-
 <template>
     <div class="firebaseui-auth-container login" style="margin-top: 5%">
     <img class="cat-icon" src="../../assets/cat_icon_2.png">
@@ -58,6 +57,8 @@ label{
     display: flex;
     justify-content: center;
     margin-top: 10px;
+    width: 100%;
+    font-size: 20px;
 }
 
 </style>

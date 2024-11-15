@@ -1,18 +1,7 @@
 <template>
 
-    <div class='container-fluid'>
 
-        <!-- <div class='row'>
-            <div class='col-2 d-flex justify-content-left'>
-                <button type="button" class="shop-item-backbutton" @click="this.$emit('toggleShop', 'shop')">Back to
-                    Shop</button>
-            </div>
-            <div class='col-9'></div>
-            <div class='col-1 d-flex justify-content-right'>
-                <button type="button" class="shop-item-backbutton" @click="this.$emit('toggleShop', 'cart')">Cart {{
-                    cartItemCount }}</button>
-            </div>
-        </div> -->
+    <div class='container-fluid'>
 
         <div class='row'>
 
@@ -43,7 +32,9 @@
                             <label>Shipping</label>
                         </div>
                         <div class='col'>
-                            <label>{{ itemObject.shipping }}</label>
+                            <label>
+                                <p>Free</p>
+                            </label>
                         </div>
                     </div>
                     <div class='row pb-2'>
@@ -51,7 +42,7 @@
                         <div class='col-3'>
                             <label>Type</label>
                         </div>
-                        <div class='col-9' v-if="itemObject.types!==undefined">
+                        <div class='col-9' v-if="itemObject.types !== undefined">
                             <select id="type-input" class="form-select shop-item-type-select">
                                 <option value="" selected hidden>Select Type</option>
                                 <option v-for="type in itemObject.types">{{ type }}</option>
@@ -80,8 +71,7 @@
                     <div class='row'>
                         <!-- ADD TO CART -->
                         <div class='col'>
-                            <button type="button" class="shop-item-cart-button" @click="addToCart()">Add to
-                                Cart</button>
+                            <button type="button" class="shop-item-cart-button" @click="addToCart(),showPopup()">Add to Cart</button>
                         </div>
                     </div>
                     <div class='row pt-5'>
@@ -95,7 +85,7 @@
                             <h4><label>Product Ratings</label></h4>
                         </div>
                     </div>
-                    <div class='row' v-if="itemObject.reviews!==undefined">
+                    <div class='row' v-if="itemObject.reviews !== undefined">
                         <div class='col'>
                             <Review v-for="review in itemObject.reviews" :name="review.name" :rating="review.rating"
                                 :reviewText="review.reviewText"></Review>
@@ -130,7 +120,6 @@ export default {
     },
     data() {
         return {
-
         }
     },
     methods: {
@@ -149,7 +138,7 @@ export default {
                     quantity: Number(document.getElementById('shop-item-quantity-input').value),
                     imageSource: this.getImageUrl(this.itemObject.images),
                 }
-                console.log("ShopItem > addTOCart() > cartItem", cartItem)
+                // console.log("ShopItem > addTOCart() > cartItem", cartItem)
                 this.$emit('addToCart', cartItem)
             } else {
                 alert("Please select a type!") // Change to display modal
@@ -161,6 +150,9 @@ export default {
             if (Number(quantityInputEle.value) < 1) {
                 quantityInputEle.value = 1
             }
+        },
+        showPopup(){
+            this.$emit('showPopup')
         }
     }
 }
@@ -168,7 +160,6 @@ export default {
 </script>
 
 <style>
-
 .shop-item-img-margin {
     width: 70%;
     height: fit-content;

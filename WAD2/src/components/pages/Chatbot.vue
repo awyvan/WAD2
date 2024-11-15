@@ -1,22 +1,28 @@
 <template>
-  <div id="app">
-    <div class="chatbot">
-      <h1>Chatbot</h1>
-      <div class="chat-area">
-        <div v-for="(message, index) in messages" :key="index" class="message">
-          <span :class="message.role">{{ message.text }}</span>
+  <div id="app" class="chatbot-container">
+    <div class="chatbot-header">
+      <h1>Pet Care Chatbot</h1>
+    </div>
+    <div class="chat-area">
+      <div v-for="(message, index) in messages" :key="index" class="message">
+        <div :class="`message-bubble ${message.role}`">
+          {{ message.text }}
         </div>
       </div>
     </div>
     <div class="question-input">
-        <input
-          v-model="newQuestion"
-          @keyup.enter="askQuestion"
-          placeholder="Ask a pet-related question..."
-        />
-      </div>
+      <input
+        v-model="newQuestion"
+        @keyup.enter="askQuestion"
+        placeholder="Ask me anything about pets!"
+      />
+      <button @click="askQuestion" class="send-button">
+        Send
+      </button>
+    </div>
   </div>
 </template>
+
 
 <script>
 import axios from "axios";
@@ -93,140 +99,137 @@ export default {
 };
 </script>
 
-<style>
-.chatbot {
-  flex-grow: 1;
-  background-color: inherit;
-  color: white;
+<style scoped>
+/* Overall container */
+.chatbot-container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 20px;
+}
+
+/* Header */
+.chatbot-header {
+  background-color: #f7dec9;
+  /* background-color: blue; */
+  text-align: center;
+  padding: 10px 0;
+  border-radius: 12px 12px 0 0;
+  color: white;
+}
+
+.chatbot-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+
+
+/* Chat area */
+.chat-area {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 15px;
+  min-height: 400px;
   overflow-y: auto;
+  margin-bottom: 15px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.message {
+  margin-bottom: 10px;
   display: flex;
   flex-direction: column;
 }
 
-.questions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5em;
-  margin-bottom: 1em;
+.message-bubble {
+  padding: 10px 15px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  max-width: 70%;
+  word-wrap: break-word;
 }
 
-.questions button {
-  background: #007bff;
+/* User message */
+.message-bubble.user {
+  background: #f29040;
+  color: white;
+  align-self: flex-end;
+}
+
+/* Bot message */
+.message-bubble.bot {
+  background: #e5e5e5;
+  color: #333;
+  align-self: flex-start;
+}
+
+/* Question input */
+.question-input {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.question-input input {
+  flex-grow: 1;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 1em;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.question-input input:focus {
+  border-color: #f29040;
+}
+
+/* Send button */
+.send-button {
+  background: #f29040;
   color: white;
   border: none;
-  padding: 0.5em;
-  border-radius: 4px;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1em;
   cursor: pointer;
   transition: background 0.3s ease;
 }
 
-.questions button:hover {
-  background: #0056b3;
+.send-button:hover {
+  background: #f29040;
 }
 
-.question-input {
-  display: flex;
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ffcf72;
-  border-radius: 5px;
-  background-color: transparent;
-  color: #545454;
-  margin-bottom: 0;
-}
-
-.question-input input {
-  flex: 1;
-  padding: 0.5em;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-.chat-area {
-  border: 1px solid #ddd;
-  padding: 1em;
-  border-radius: 8px;
-  min-height: 500px;
-  background: #f9f9f9;
-  box-sizing: border-box;
-}
-
-.message {
-  margin: 0.5em 0;
-}
-
-.message .user {
-  color: blue;
-  font-weight: bold;
-}
-
-.message .bot {
-  color: green;
-  font-style: italic;
-}
-
-/* Responsive Styles */
-@media (max-width: 1024px) {
-  #app {
-    max-width: 90%;
-  }
-
-  .chatbot {
-    padding: 1em;
-  }
-}
-
+/* Responsive styles */
 @media (max-width: 768px) {
-  #app {
-    max-width: 100%;
-    padding: 0.5em;
+  .chatbot-container {
+    padding: 15px;
   }
 
-  .chatbot {
-    padding: 0.8em;
-  }
-
-  .question-input input {
-    padding: 0.4em;
-  }
-
-  .questions button {
-    padding: 0.4em;
+  .chatbot-header h1 {
+    font-size: 1.5em;
   }
 
   .chat-area {
-    min-height: 150px;
-    padding: 0.8em;
-  }
-}
-
-@media (max-width: 480px) {
-  .chatbot {
-    padding: 0.5em;
-  }
-
-  h1 {
-    font-size: 1.2em;
+    min-height: 300px;
   }
 
   .question-input input {
-    padding: 0.3em;
     font-size: 0.9em;
   }
 
-  .questions button {
-    padding: 0.3em;
-    font-size: 0.9em;
-  }
-
-  .chat-area {
-    min-height: 120px;
-    padding: 0.6em;
-  }
-
-  .message .user, .message .bot {
+  .send-button {
+    padding: 8px 15px;
     font-size: 0.9em;
   }
 }

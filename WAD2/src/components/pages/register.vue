@@ -38,7 +38,7 @@
           <!-- Other form fields for address, contact number, etc. -->
   
           <div class="next-button-container">
-            <button type="submit" class="button">Let's Go
+            <button type="submit" class="button">Register Account
             </button>
           </div>
           <p v-if="errorMessage" class="errorMessage">{{ errorMessage }}</p>
@@ -194,6 +194,13 @@ label{
 }
 .next-button-container{
     text-align: right;
+}
+.button{
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  width: 100%;
+  font-size: 20px;
 }
 
 </style>

@@ -47,17 +47,9 @@ a {
   object-fit: cover;
 }
 
-.card-title {
-  font-size: 0.85em;
-}
-
-.card-text {
-  font-size: 0.7em;
-}
-
-.stars {
-  font-size: 0.7em;
-}
+/* .card-title,.card-text,.stars {
+  font-size: 1em;
+} */
 
 .fa-star.unchecked {
     color: #d6d6d6;

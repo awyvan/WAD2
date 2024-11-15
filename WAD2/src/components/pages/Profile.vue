@@ -185,154 +185,156 @@ export default {
 
 <style>
 
-.cardforscroll{
-  width:100%;
-  flex: 0 0 auto;
-  display: flex;
-  padding:10px;
-  display: flex;
-  height: 100%;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+.card-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-top: 10px;
 }
-  
-  .reviewer-name {
+
+.reviewer-name {
     margin-right: auto;
     text-align: left;
-  }
+}
 
-  .reviewer-pic {
+.reviewer-pic {
     height: 50px;
     width: 50px;
     border-radius: 50%;
-  }
+}
 
-  .stars {
+.stars {
     display: flex;
-  }
+}
 
-  .fa-star {
+.fa-star {
     color: gold;
-  }
+}
 
-  .fa-star.checked {
+.fa-star.checked {
     color: #ffd700;
-  }
+}
 
-h1,h2,h3, h6{
+h1, h2, h3, h6 {
     color: #ff9f48 !important;
     text-align: center;
 }
-.box{
-    margin-top:10px;
+
+.box {
+    margin-top: 10px;
 }
 
-.profile-bar{
+.profile-bar {
     display: block;
     align-items: center;
     text-align: center;
 }
-.review-text{
+
+.review-text {
     word-wrap: break-word;
-    overflow-wrap: break-word; /* Ensures long words break to fit the container */
-    white-space: normal; /* Ensures text wraps normally */
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
-.profile_pic{
+.profile_pic {
     width: 70%;
     height: auto;
 }
-.profile-name{
+
+.profile-name {
     color: #9e4632;
     padding-top: 10%;
 }
-.profile-tagline,svg{
+
+.profile-tagline, svg {
     color: #9e4632;
 }
-.profile-location p, .profile-location svg{
-    display:inline;
+
+.profile-location p, .profile-location svg {
+    display: inline;
     color: #9e4632;
 }
-svg{
-   height: 10%;
+
+svg {
+    height: 10%;
 }
-.bi-star{
+
+.bi-star {
     fill: yellow;
 }
-.more-description{
-    margin-top:5%;
-}
-.profile-buttons{
+
+.more-description {
     margin-top: 5%;
 }
-.button{
+
+.profile-buttons {
+    margin-top: 5%;
+}
+
+.button {
     color: #9e4632;
     border: solid white 1px;
     border-radius: 5px;
     font-size: 70%;
 }
 
-/* For the scrolling elements */
-.card-body{
-  overflow: hidden;
-}
+/* Card layout adjustments for two-column grid */
 .card-container {
-    width: 100%;
-    white-space: nowrap;
     display: flex;
-    height: 40%;
-    white-space: nowrap;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch; 
-    flex-direction: row;
-    flex-wrap:nowrap;
-    padding:10px;
-  }
-
-.review-card{
-  flex: 0 0 auto;
-  width: 50%;
-  height: 500px !important;
-  overflow: hidden;
+    flex-wrap: wrap;
+    max-width: 1000px;
+    flex-wrap: wrap; /* Allows wrapping of the cards */
+    justify-content: center; /* Centers the cards horizontally */
+    gap: 16px; /* Adjust gap between cards */
+    padding: 10px;
 }
+
+
+
 .cards {
-  display: flex;
-  scroll-snap-type: x mandatory;
-  width: 100%;
-  gap: 10px; /* Adjust gap between cards */
-  word-wrap: break-word;
-
+    display: flex;
+    flex-wrap: wrap; /* Allow cards to wrap into rows */
+    width: 60%;
+}
+.card-top {
+    display: flex;
+    text-align: left;
 }
 
-
-
-.card-top{
-    display:flex;
-    text-align:left;
+.reviewer-pic {
+    display: inline;
 }
-.reviewer-pic{
-    display:inline;
-}
-.reviewer-name{
-    display:inline;
+
+.reviewer-name {
+    display: inline;
     margin-left: 20px;
     margin: 0;
 }
-.reviewer-info{
-    margin-left: 20px;
-}
-.review-photo{
+
+.review-photo {
     width: 30%;
     border-radius: 2px;
 }
-/* for the stars */
-.stars{
+
+.stars {
     margin-top: 5px;
 }
-.checked{
+
+.checked {
     color: orange;
 }
+
+/* Scroll behavior for mobile or limited-width views */
+.card-container {
+    display: flex;
+    flex-wrap: wrap; /* Ensure the cards can wrap if there's not enough space */
+    justify-content: center; /* Center the cards */
+    max-width: 1000px; /* Set a max width for the container to ensure space for 2 cards */
+    margin: 0 auto; /* Center the container horizontally */
+    gap: 16px; /* Space between the cards */
+    padding: 10px;
+}
+
 
 
 </style>

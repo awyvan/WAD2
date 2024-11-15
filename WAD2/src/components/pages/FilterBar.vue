@@ -6,16 +6,14 @@
         <label for="">Filter</label>
       </div>
 
-      <!-- <div class="col-xxl-2 col-lg-3 col-md-4 d-flex align-items-center"> -->
-      <div class="col-md d-flex align-items-center">
+      <div class="col-xl-3 col-lg-4 col-md-5 d-flex align-items-center">
         <div class="d-inline-block ">
-          <label style="font-size: 0.7em;margin-right: 10px;">Search:  </label>
+          <label style="margin-right: 10px;">Search:  </label>
           <input class="shop-filterbar-search mt-1 w-75" type="text" id="shop-filter-searchbar" @input="updateFilter">
         </div>
       </div>
 
-      <!-- <div class="col-lg-2 col-md-3 mt-2"> -->
-      <div class="col-lg-2 col-md-3 mt-2">
+      <div class="col-xl-2 col-sm-4 mt-2">
         <!-- Min Price -->
         <div class="mb-1">
           <label class="filter-label" for="min-price">Min Price:</label>
@@ -32,7 +30,7 @@
         <!-- Max Price -->
       </div>
 
-      <div class="col mt-2 d-flex align-items-center">
+      <div class="col-sm mt-2 d-flex align-items-center">
         <!-- Rating -->
         <div class="d-inline-block d-flex align-items-center">
           <label class="filter-label" for="shop-filter-rating-input" style="margin-right:10px;">Rating:</label>
@@ -42,7 +40,6 @@
         </div>
         <!-- Rating -->
       </div>
-      <div class="col-xxl-5 col-xl-4 col-lg-3 col-md-1"></div>
     </div>
   </div>
 
@@ -117,16 +114,12 @@ export default {
 
 /* Style for the labels */
 .filter-label {
-  font-size: 0.7em;
-  /* margin-right: 10px;
-  
-  color: #fff; */
+
 }
 
 /* Style for the min and max input boxes */
 .min-price,
 .max-price{
-  font-size: 0.7em;
   width: 60px;
   margin: 0 0 0 10px;
   /* display: block;
@@ -143,7 +136,7 @@ export default {
 }
 
 .stars {
-  font-size: 0.7em;
+  font-size: 1em;
   margin-bottom: 1em;
 }
 

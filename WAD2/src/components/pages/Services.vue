@@ -58,8 +58,8 @@ export default {
                 payment: '',
                 status: '',
             },
-            PetOwnerName: "PetOwnerF", //need to connect to login so every calendar and my listings page are to the person
-            ServiceProviderName: "ServiceProviderF", //need to connect to login so every calendar and my listings page are to the person
+            PetOwnerName: "", //need to connect to login so every calendar and my listings page are to the person
+            ServiceProviderName: "", //need to connect to login so every calendar and my listings page are to the person
             selectedEvent: null,
             showOngoingListing: false,
             searchQuery: '',
@@ -88,11 +88,19 @@ export default {
     
   },
     mounted() {
+        this.getUserInfo();
         this.getalljobs();
         this.getallservices();
         this.getIndivEvents();
         this.getIndivEventsService();
-        
+        this.transferExpiredService();
+        this.transferExpiredJob();
+        this.getmyjobs();
+        this.getmyongoingjobs();
+        this.getmypastjobs();
+        this.getmyservices();
+        this.getmyongoingservices();
+        this.getmypastservices();
     },
     watch: {
         reqServiceTypeP(newValue) {
@@ -104,9 +112,23 @@ export default {
         if (!newValue && this.selectedServiceTypesS.length > 0) {
             this.selectedServiceTypesS = [];
         }
-    }
+    },
+
     },
     methods: {
+        getUserInfo(){
+            const nameFromStorage = localStorage.getItem('name');
+
+    // Check if nameFromStorage is null or undefined
+        if (nameFromStorage) {
+            this.PetOwnerName = nameFromStorage;
+            this.newEvent.name = nameFromStorage;  // No need for toString() as localStorage returns a string
+            this.ServiceProviderName = nameFromStorage;
+            this.newEventService.name = nameFromStorage;
+        } else {
+            console.error("No 'name' found in localStorage");
+        }
+        },
         toggle() {
             if (this.isPetOwner) {
                 this.isPetOwner = false;
@@ -116,6 +138,9 @@ export default {
                 this.isPetOwner = true;
                 this.currentPage= 'Find Services';
             }
+        },
+        viewProfile(personName){ 
+            this.$router.push({ name: 'otherProfile', params: { name: personName } });
         },
         checkpage(index) {
             this.iscurrentPage = [false,false,false,false,false,false];
@@ -176,7 +201,23 @@ export default {
             } else if (parseFloat(this.newEvent.payment) > 50) {
                 this.errorsP.payment = 'Payment cannot exceed $50 per hour';
             }
-            console.log(this.errorsP)
+        },
+        validateFormS() {
+            this.errorsS = {};
+
+            if (!this.newEvent.name) this.errorsS.name = 'Name is required';
+            if (!this.newEvent.title) this.errorsS.title = 'Title is required';
+            if (this.newEvent.serviceTypeReq.length === 0) this.errorsP.serviceTypeReq = 'Select at least one service';
+            if (!this.newEvent.address) this.errorsS.address = 'Address is required';
+            if (!this.newEvent.contactNum) this.errorsS.contactNum = 'Contact number is required';
+            if (!this.newEvent.startDateTime) this.errorsS.startDateTime = 'Start date and time is required';
+            if (!this.newEvent.endDateTime) this.errorsS.endDateTime = 'End date and time is required';
+
+            if (!this.newEvent.payment) {
+                this.errorsS.payment = 'Payment is required';
+            } else if (parseFloat(this.newEvent.payment) > 50) {
+                this.errorsS.payment = 'Payment cannot exceed $50 per hour';
+            }
         },
         viewMore(event) {
             this.selectedEvent = event;
@@ -400,7 +441,10 @@ export default {
                     documentId: data.documentId,
                     linkedPerson: data.linkedPerson,
                     };
-                });
+                }
+                
+            );
+
             } catch (error) {
                 console.error("Error fetching events:", error);
             }
@@ -526,7 +570,7 @@ export default {
                     end: data.end.replace('T', ' ')
                     };
                 });
-                this.mypastservices = [...pastservicesData1, ...pastservicesData2, ...pastjobsData1, ...pastjobsData2]
+                this.mypastservices=[...pastjobsData1,...pastjobsData2,...pastservicesData1,...pastservicesData2]
             } catch (error) {
                 console.error("Error fetching events:", error);
             }
@@ -761,7 +805,7 @@ export default {
                     await updateDoc(fromCollectionRef, {
                         status: 'complete'
                     });
-                    console.log('Status updated to "cancelled".');
+                    
 
                     const updatedDocSnap = await getDoc(fromCollectionRef);
                     console.log('Updated document:', updatedDocSnap.data());
@@ -777,7 +821,7 @@ export default {
                 console.error('Error transferring service:', error);
             }
         },
-        async completeOngoingService(id) {
+        async completeOngoingJob(id) {
             try {
                 
                 const fromCollectionRef = doc(db, 'ongoing', id);
@@ -787,12 +831,11 @@ export default {
                     await updateDoc(fromCollectionRef, {
                         status: 'complete'
                     });
-                    console.log('Status updated to "cancelled".');
 
                     const updatedDocSnap = await getDoc(fromCollectionRef);
                     console.log('Updated document:', updatedDocSnap.data());
 
-                    const toCollectionRef = doc(db, 'pastservices', id);
+                    const toCollectionRef = doc(db, 'pastjobs', id);
                     await setDoc(toCollectionRef, updatedDocSnap.data());
                     await deleteDoc(fromCollectionRef);
                     
@@ -975,8 +1018,9 @@ export default {
                     (jobStart <= blockStart && jobEnd >= blockEnd)      
                 );
             });
-        }
+        },
     },
+    
     components: {
     VueCal,
     },
@@ -1181,14 +1225,14 @@ export default {
         background: rgb(0,0,0,0.5);
     }
     .popupContent {
-        background-color: #242424;
+        background-color: #fae1ae;
         padding: 20px;
         border-radius: 8px;
         text-align:center;
-        border: 3px solid #f29040;
+        border: 3px solid #7c321b;
         margin:auto;
         width:20%;
-        
+        z-index:9999;
     }
     .card-text {
         color: #ECDFCC;
@@ -1302,16 +1346,16 @@ export default {
     </div>
         <div v-if="isPetOwner" class="col-md-12 col-lg-8 col-12">
             <span>
-                <button @click="currentPage = 'Find Services';checkpage(0);navigate('Find Services')" :class="{curPage:iscurrentPage[0]}" style="display:inline-block" class="col-5 col-md-4"><strong>Find Services</strong></button>
-                <button @click="currentPage = 'Post Jobs';checkpage(1);navigate('Post Jobs')" :class="{curPage:iscurrentPage[1]}" style="display:inline-block" class="col-3 col-md-4"><strong>Post Jobs</strong></button>
-                <button @click="currentPage = 'Current Services';checkpage(2);navigate('Current Services')" :class="{curPage:iscurrentPage[2]}" style="display:inline-block" class="col-4 col-md-4"><strong>My listings</strong></button>
+                <button @click="currentPage = 'Find Services';checkpage(0);navigate('Find Services');getallservices();" :class="{curPage:iscurrentPage[0]}" style="display:inline-block" class="col-5 col-md-4"><strong>Find Services</strong></button>
+                <button @click="currentPage = 'Post Jobs';checkpage(1);navigate('Post Jobs');getIndivEvents();" :class="{curPage:iscurrentPage[1]}" style="display:inline-block" class="col-3 col-md-4"><strong>Post Jobs</strong></button>
+                <button @click="currentPage = 'Current Services';checkpage(2);navigate('Current Services');getmyongoingjobs();getmyjobs();getmypastjobs();" :class="{curPage:iscurrentPage[2]}" style="display:inline-block" class="col-4 col-md-4"><strong>My listings</strong></button>
             </span>
         </div>
         <div v-else-if="!isPetOwner" class="col-md-12 col-lg-8 col-12">
             <span>
-                <button @click="currentPage = 'Find Jobs';checkpage(3);navigate('Find Jobs')" :class="{curPage:iscurrentPage[3]}" style="display:inline-block" class="col-3 col-md-4"><strong>Find Jobs</strong></button>
-                <button @click="currentPage = 'Post Services';checkpage(4);navigate('Post Services')" :class="{curPage:iscurrentPage[4]}" style="display:inline-block" class="col-5 col-md-4"><strong>Post Services</strong></button>
-                <button @click="currentPage = 'Current Jobs';checkpage(5);navigate('Current Jobs')" :class="{curPage:iscurrentPage[5]}" style="display:inline-block" class="col-4 col-md-4"><strong>My listings</strong></button>
+                <button @click="currentPage = 'Find Jobs';checkpage(3);navigate('Find Jobs');getalljobs();" :class="{curPage:iscurrentPage[3]}" style="display:inline-block" class="col-3 col-md-4"><strong>Find Jobs</strong></button>
+                <button @click="currentPage = 'Post Services';checkpage(4);navigate('Post Services');getIndivEventsService();" :class="{curPage:iscurrentPage[4]}" style="display:inline-block" class="col-5 col-md-4"><strong>Post Services</strong></button>
+                <button @click="currentPage = 'Current Jobs';checkpage(5);navigate('Current Jobs');getmyongoingservices();getmyservices();getmypastservices();" :class="{curPage:iscurrentPage[5]}" style="display:inline-block" class="col-4 col-md-4"><strong>My listings</strong></button>
             </span>
         </div>
     </div>
@@ -1332,7 +1376,6 @@ export default {
                     <div class="col-12 col-lg-7 col-md-12">
                         <div class="input-group-search">
                             <input type="text" v-model="searchQuery" @input="searchServices()" placeholder="Search" id="searchP" style="border-radius:8px;" class="col-11 col-md-11 searchBar">
-                            <label for="searchP"><img src="/img/searchicon.png" style="width:30px; padding-bottom:1px; margin-left:5px;" class="col-1 col-md-1"></label>
                         </div>
                     </div>
                     
@@ -1376,7 +1419,7 @@ export default {
             </div>
             <div class="RecommendationsPage" v-else-if="currServicePage==='Recommendations Page'" > <!--when button 'Get Recommendations' is clicked-->
                 <div>
-                    <button @click="currServicePage = 'mainServicesPage',getallservices()" style="background-color: #242424;"><img src="../../../public/img/arrow-121-16.png"> Go back</button>
+                    <button @click="currServicePage = 'mainServicesPage'" style="background-color: #242424;"><img src="../../../public/img/arrow-121-16.png"> Go back</button>
                 </div>
                 <div class="row">
                 <div class="calendar-container col-12 col-sm-12 col-md-12 col-lg-6">
@@ -1388,15 +1431,15 @@ export default {
                     
                 </vue-cal>
                 </div>
-                <div class="col-12 col-sm-12 col-md-12 col-lg-6">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-6" style="text-align:center">
                     <strong style="font-size:x-large">Input the time block u wish to search for services</strong><br>
                     <strong style="font-size:large">Start date & time:</strong><input type="datetime-local" name="Datetime" v-model="newTimeP.start" @input="updateTimeP()"><br>
                     <strong style="font-size:large">End date & time:</strong><input type="datetime-local" name="Datetime" v-model="newTimeP.end" @input="updateTimeP()"> <br>
                     <strong style="font-size:large">Recommended Services:</strong>
                     <div class="row">
                     <div v-for="service in recommendServices" :key="service.documentId" class="col-6 col-sm-6 col-md-6 col-lg-6">
-                    <div class="card card-fixed w-100">
-                    <img :src="service.image" class="card-image"/>
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="service.image" class="card-image" style="width:100%;height:auto"/>
                     <div class="card-body" style="margin-top:2px;; border-top: 3px solid #7c321b">
                         <h3><strong>{{ service.title }}</strong></h3>
                         <h5 style="text-align:center"><strong> {{ service.name }}</strong></h5>
@@ -1406,7 +1449,7 @@ export default {
                         <p class="card-text"><strong>Contact Number: </strong>{{ service.contactNum }}</p>
                         <p class="card-text"><strong>Payment:</strong> ${{ service.payment }} / hour</p>
                         <p class="card-text"><strong>Skills & Experiences:</strong> <br> {{ service.skillsExp }}</p>
-                        <button @click="ongoingService(service.documentId)"><strong>Accept Service</strong></button>
+                        <button @click="ongoingService(service.documentId);getallservices();getmyongoingjobs()"><strong>Accept Service</strong></button>
                     </div>
                     </div>
                     </div>
@@ -1418,8 +1461,8 @@ export default {
                 <div v-if="searchServices().length > 0">
                 <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
                 <div v-for="service in searchServices()" :key="service.documentId" class="col-12 col-sm-12 col-md-6 col-lg-3">
-                    <div class="card card-fixed w-100">
-                    <img :src="service.image" class="card-image" style="width:100%;height:70%"/>
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="service.image" class="card-image" style="width:100%;height:auto"/>
                     <div class="card-body" style="margin-top:2px;; border-top: 3px solid #7c321b">
                         <h3><strong>{{ service.title }}</strong></h3>
                         <h5 style="text-align:center"><strong> {{ service.name }}</strong></h5>
@@ -1429,7 +1472,7 @@ export default {
                         <p class="card-text"><strong>Contact Number: </strong>{{ service.contactNum }}</p>
                         <p class="card-text"><strong>Payment:</strong> ${{ service.payment }} / hour</p>
                         <p class="card-text"><strong>Skills & Experiences:</strong> <br> {{ service.skillsExp }}</p>
-                        <button @click="ongoingService(service.documentId)"><strong>Accept Service</strong></button>
+                        <button @click="ongoingService(service.documentId);getallservices();getmyongoingjobs();"><strong>Accept Service</strong></button>
                     </div>
                     </div>
                 </div>
@@ -1439,7 +1482,7 @@ export default {
                     No matching search found.
                 </div>
                 <div v-else-if="selectedServiceTypesP.length > 0 && searchServices.length === 0" class="noAvailability">
-                    No jobs available for the selected job type.
+                    No services available for the selected job type.
                 </div>
                 <div v-if="allservices.length===0 && searchQuery.trim()==='' && selectedServiceTypesP.length===0" class="noAvailability">
                     <img src="/img/dogcaticon.png" style="max-width:10%;height:auto" class="no-availability-image col-12">
@@ -1462,7 +1505,7 @@ export default {
                     
                 </vue-cal>
                 <div v-if="!showButton" class="col-lg-6 col-md-12" style="display: flex; justify-content: center; align-items: center;">
-                    <button v-if="!showButton" @click="showbutton()" class="jobButton">
+                    <button v-if="!showButton" @click="showbutton();getUserInfo()" class="jobButton">
                         <span class="addIcon">## </span><span style="position: relative; right: 28px; bottom: 1px;color:white;">+</span>Create a new Job
                     </button>
                 </div>
@@ -1476,7 +1519,7 @@ export default {
 
                             <div class="input-group">
                                 <label for="Name">Name:</label>
-                                <input type="text" id="Name" name="Name" v-model="newEvent.name" class="input-field" required>
+                                <input type="text" id="Name" name="Name" :value="PetOwnerName" class="input-field" readonly>
                             </div>
                             <div v-if="errorsP.name" class="error">{{ errorsP.name }}</div>
 
@@ -1500,8 +1543,8 @@ export default {
                                 <label class="checkbox-label">
                                     <input type="checkbox" name="ServiceCheckBox" v-model="newEvent.serviceTypeReq" value="Pet Trainer"> Pet Trainer
                                 </label>
-                                <span v-if="errorsP.serviceTypeReq" class="error">{{ errorsP.serviceTypeReq }}</span>
                             </div>
+                            <div v-if="errorsP.serviceTypeReq" class="error">{{ errorsP.serviceTypeReq }}</div>
 
                             <div style="padding-top: 15px;">
                                 <label for="SpecialRequirements">Special Requirements:</label><br>
@@ -1545,12 +1588,12 @@ export default {
             </div>
             </div>
             <div v-if="confirmPopup" class="cfmPopup" style="display:flex;">
-                <div class="popupContent"> 
-                    <p style="color:#ECDFCC"> Would you like to submit?</p>
+                <div class="popupContent col-4 col-sm-6 col-lg-4 col-md-5" > 
+                    <p style="color:#7c321b; text-align:center;"> Would you like to submit?</p>
                     <div style="display:flex;">
-                    <button type="submit" class="col-3" @click="showButton = false;confirmPopup=false;addJob();getIndivEvents();" style="border-radius:8px; border: 3px solid #697565;">Yes</button>
+                    <button type="submit" class="col-3" @click="showButton = false;confirmPopup=false;addJob();getIndivEvents();getmyjobs();getmypastjobs()" style="border-radius:8px; border: 3px solid #7c321b;">Yes</button>
                     <div class="col-6"></div>
-                    <button class="col-3"@click="confirmPopup=false" style="border-radius:8px; border: 3px solid #697565;">No</button></div>
+                    <button class="col-3"@click="confirmPopup=false" style="border-radius:8px; border: 3px solid #7c321b;">No</button></div>
                 </div>
             </div>
         </div>
@@ -1559,59 +1602,75 @@ export default {
         <transition :name="transitionName" mode="out-in">
         <div v-if="currentPage === 'Current Services'"> <!--Pet Owner: Current Services-->
             <div style="border-bottom: 3px solid #464545; padding-bottom: 10px;"> <!--All ongoing services-->
-                <h1 style="margin-top: 10px;margin-left:5px;">Ongoing listings</h1>
-                <div class="row" style="margin-top:10px;padding-left:5px;padding-right:5px;">
-                <div v-for="(event,index) in myongoingjobs" :key="index" class="col-3">
-                    <div class="card card-fixed w-100">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Listing by: {{ event.name }} <br> Listing For: {{ event.linkedPerson }}</p> 
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Required: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ event.payment }} / hour</p>
-                        <p class="card-text"> Special Requirements: <br>{{ event.specialReq }}</p>
-                        <button @click="viewMore(event)">View More</button>
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">Ongoing listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in myongoingjobs" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto"/>
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Listing by:</strong> {{ event.name }} <br> <strong>Listing For:</strong> {{ event.linkedPerson }}</p> 
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.specialReq }}</p>
+                        <button @click="viewMore(event)"><strong>View More</strong></button>
                     </div>
                     </div>
                 </div>
+                </div>
+                <div v-if="myongoingjobs.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No ongoing listings available</strong>
                 </div>
             </div>
             <div style="border-bottom: 3px solid #464545; padding-bottom: 10px;"> <!--All created, non expired job listings-->
-                <h1 style="margin-top: 10px;margin-left:5px;">My listings</h1>
-                <div v-for="(event,index) in myjobs" :key="index" class="card col-3 card-fixed" style="display:inline-flex; margin-left:5px; border: solid 3px #000000">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Required: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ event.payment }} / hour</p>
-                        <p class="card-text">Special Requirements: <br>{{ event.specialReq }}</p>
-                        <button @click="cancelJob(event.documentId)">Cancel Listing</button>
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">My listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in myjobs" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3" >
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto;" />
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.specialReq }}</p>
+                        <button @click="cancelJob(event.documentId);getmyjobs();getmypastjobs();getalljobs()">Cancel Listing</button>
                     </div>
+                    </div>
+                </div>
+                </div>
+                <div v-if="myjobs.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No listings</strong>
                 </div>
             </div>
 
             <div> <!--Completed / Cancelled / Expired listings-->
-                <h1 style="margin-top: 10px;margin-left:5px;">Past listings</h1>
-                <div v-for="(event,index) in mypastjobs" :key="index" class="card col-3 card-fixed" style="display:inline-flex; margin-left:5px; border: solid 3px #000000;">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Required: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ event.payment }} / hour</p>
-                        <p class="card-text"> Special Requirements: <br>{{ event.specialReq }}</p>
-                        <p class="card-text"> Status: <br>{{ event.status }}</p>
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">Past listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in mypastjobs" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto;" />
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.specialReq }}</p>
+                        <p class="card-text"><strong>Status: <br>{{ event.status }}</strong></p>
+                    </div>
                     </div>
                 </div>
-                
+                </div>
+                <div v-if="mypastjobs.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No past listings</strong>
+                </div>
             </div>
             <div v-if="showOngoingListing" class="listing-overlay"> <!--Full screen of selected ongoing listing-->
                 <div class="listing-content">
@@ -1639,13 +1698,9 @@ export default {
                                 <p><strong>Skills & Experiences:</strong> {{ selectedEvent.skillsExp }}</p>
                                 <p><strong>Status:</strong>{{ selectedEvent.status }}</p>
                                 <div class="text-center">
-                                    <!--<button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>{{ selectedEvent.name }}'s Profile</strong></button>
-                                    <button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>{{ selectedEvent.linkedPerson }}'s Profile</strong></button>
-                                    <button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>Chat</strong></button>-->
-                                    <br>
-                                    <button style="border:2px solid red;border-radius:8px;" class="m-2" @click="cancelOngoingJob(selectedEvent.documentId)"><strong>Cancel</strong></button>
+                                    <button style="border:2px solid red;border-radius:8px;" class="m-2" @click="cancelOngoingJob(selectedEvent.documentId);closeListing();getmyongoingjobs();getmypastjobs()"><strong>Cancel</strong></button>
                                     
-                                    <button style="border:2px solid green;border-radius:8px;" class="m-2" @click="completeOngoingService(selectedEvent.documentId)"><strong>Complete</strong></button>
+                                    <button style="border:2px solid green;border-radius:8px;" class="m-2" @click="completeOngoingService(selectedEvent.documentId);closeListing();getmyongoingjobs();getmypastjobs()"><strong>Complete</strong></button>
                                 </div>
                                 <div class="text-center mt-3">
                                     <button @click="closeListing()" class="close-btn" style="border:1px solid #f29040;border-radius:8px;"><strong>Close</strong></button>
@@ -1672,7 +1727,6 @@ export default {
                     <div class="col-12 col-lg-7 col-md-12">
                         <div class="input-group">
                             <input type="text" v-model="searchQueryS" @input="searchJobs()" placeholder="Search" id="search" style="border-radius:8px;" class="col-11 col-md-11">
-                            <label for="search"><img src="../../../public/img/searchicon.png" style="width:30px; padding-bottom:1px; margin-left:5px;" class="col-1 col-md-1"></label>
                         </div>
                     </div>
                 </div>
@@ -1719,7 +1773,7 @@ export default {
                     <button @click="currJobPage = 'MainJobsPage'"><img src="../../../public/img/arrow-121-16.png"> &nbsp;Go back</button>
                 </div>
                 <div class="row">
-                <div class="calendar-container col-12 col-sm-12 col-md-6 col-lg-6">
+                <div class="calendar-container col-12 col-sm-12 col-md-12 col-lg-6">
                     <vue-cal class="calendar" style="height:750px"  
                     hide-title-bar
                     :events="selectedTimingsS"
@@ -1728,25 +1782,25 @@ export default {
                     
                 </vue-cal>
                 </div>
-                <div class="col-12 col-sm-12 col-md-6 col-lg-6" style="text-align:center">
+                <div class="col-12 col-sm-12 col-md-12 col-lg-6">
                     <strong style="font-size:x-large">Input the time block u wish to search for jobs</strong><br>
                     <strong style="font-size:large">Start date & time:</strong><input type="datetime-local" name="Datetime" v-model="newTimeS.start" @input="updateTimeS()"><br>
                     <strong style="font-size:large">End date & time:</strong><input type="datetime-local" name="Datetime" v-model="newTimeS.end" @input="updateTimeS()"> <br>
-                    <strong style="font-size:large">Recommended Services:</strong>
+                    <strong style="font-size:large">Recommended Jobs:</strong>
                     <div class="row">
-                    <div v-for="job in recommendJobs" :key="job.documentId" class="col-12 col-lg-6">
-                    <div class="card card-fixed w-100">
-                    <img :src="job.image" class="card-image" style="width:100%;height:70%"/>
-                    <div class="card-body" style="margin-top:2px;; border-top: 3px solid #464545">
-                        <h3> {{ job.title }}</h3>
-                        <h5> {{ job.name }}</h5>
-                        <p class="card-text">Period of service: <br> {{ job.start }} - {{ job.end }}</p>
-                        <p class="card-text">Services needed: <br> {{ job.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ job.address }}</p>
-                        <p class="card-text">Contact Number: {{ job.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ job.payment }} / hour</p>
-                        <p class="card-text">Special Requirements: <br> {{ job.specialReq }}</p>
-                        <button @click="ongoingJob(job.documentId)">Accept Job</button>
+                    <div v-for="job in recommendJobs" :key="job.documentId" class="col-6 col-sm-6 col-md-6 col-lg-6">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="job.image" class="card-image" style="width:100%;height:auto"/>
+                    <div class="card-body" style="margin-top:2px; border-top: 3px solid #7c321b">
+                        <h3><strong>{{ job.title }}</strong></h3>
+                        <h5 style="text-align:center"><strong> {{ job.name }}</strong></h5>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong> {{ formatDate(job.start) }}<br><strong>To:</strong> {{ formatDate(job.end) }}</p>
+                        <p class="card-text"><strong>Services needed: </strong><br> {{ job.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ job.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ job.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ job.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br> {{ job.specialReq }}</p>
+                        <button @click="ongoingJob(job.documentId);getalljobs();getmyongoingservices();"><strong>Accept Job</strong></button>
                     </div>
                     </div>
                     </div>
@@ -1756,20 +1810,20 @@ export default {
             </div> 
             <div v-if="currJobPage==='MainJobsPage'"> <!--Find Jobs (Service listings using cards)-->
                 <div v-if="searchJobs().length > 0">
-                <div class="row" style="margin-top:10px;padding-left:5px;padding-right:5px;">
-                <div v-for="job in searchJobs()" :key="job.documentId" class="col-3">
-                    <div class="card card-fixed w-100">
-                    <img :src="job.image" class="card-image" />
-                    <div class="card-body" style="margin-top:2px;; border-top: 3px solid #464545">
-                        <h3>{{ job.title }}</h3>
-                        <h5>{{ job.name }}</h5>
-                        <p class="card-text">Period of service: <br>{{ job.start }} - {{ job.end }}</p>
-                        <p class="card-text">Services Required: <br>{{ job.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ job.address }}</p>
-                        <p class="card-text">Contact Number: {{ job.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ job.payment }} / hour</p>
-                        <p class="card-text"> Special Requirements: <br>{{ job.specialReq }}</p>
-                        <button @click="ongoingJob(job.documentId)">Accept Job</button>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="job in searchJobs()" :key="job.documentId" class="col-12 col-sm-12 col-md-6 col-lg-3">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="job.image" class="card-image" style="width:100%;height:auto;"/>
+                    <div class="card-body" style="margin-top:2px;; border-top: 3px solid #7c321b">
+                        <h3><strong>{{ job.title }}</strong></h3>
+                        <h5 style="text-align:center"><strong>{{ job.name }}</strong></h5>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong> {{ formatDate(job.start) }}<br><strong>To:</strong> {{ formatDate(job.end) }}</p>
+                        <p class="card-text"><strong>Services needed: </strong><br> {{ job.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ job.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ job.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ job.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br> {{ job.specialReq }}</p>
+                        <button @click="ongoingJob(job.documentId);getalljobs();getmyongoingjobs()"><strong>Accept Job</strong></button>
                     </div>
                     </div>
                 </div>
@@ -1791,37 +1845,41 @@ export default {
 
         <transition :name="transitionName" mode="out-in">
         <div v-if="currentPage === 'Post Services'"> <!--Service Provider: Post Services-->
+            <div><button @click="getIndivEventsService(),getmyservices(),transferExpiredService(),getmypastservices()"class="reloadButton">Reload</button></div>
+            
             <div class="calendar-container">
                 <div class="row">
-                <vue-cal class="calendar col-6" style="height:750px"  
+                <vue-cal class="calendar col-lg-6 col-md-12" style="height:750px"  
                 hide-title-bar
                 :events="serviceevents"
                 :disable-views="['years']"
                 >
                     
                 </vue-cal>
-                <div v-if="!showButton" class="col-6" style="display: flex; justify-content: center; align-items: center;">
-                    <button v-if="!showButton" @click="showbutton()" class="jobButton">
+                <div v-if="!showButton" class="col-lg-6 col-md-12" style="display: flex; justify-content: center; align-items: center;">
+                    <button v-if="!showButton" @click="showbutton();getUserInfo()" class="jobButton">
                         <span class="addIcon">## </span><span style="position: relative; right: 28px; bottom: 1px;color:white;">+</span>Create a new Service
                     </button>
                 </div>
 
-                <div class="col-6" style="display: flex; justify-content: center; align-items: flex-start;">
+                <div class="col-lg-6 col-md-12" style="display: flex; justify-content: center; align-items: flex-start;">
                     <div v-if="showButton" class="createJobForm" style="width: 80%; padding: 20px; background-color: #f5f5f5; border-radius: 10px;">
                         <!-- Create a new job listing -->
-                        <form @submit.prevent="showconfirmPopup">
-                            <h1 style="text-align:center; color: #697565;">New Service Listing</h1>
-                            <div style="border: 1.5px solid #697565; margin-bottom: 10px;"></div>
+                        <form @submit.prevent="showconfirmPopup()">
+                            <h1 style="text-align:center; color: #7c321b !important;"><strong>New Service Listing</strong></h1>
+                            <div style="border: 1.5px solid #7c321b; margin-bottom: 10px;"></div>
 
                             <div class="input-group">
                                 <label for="Name">Name:</label>
-                                <input type="text" id="Name" name="Name" v-model="newEventService.name" class="input-field">
+                                <input type="text" id="Name" name="Name" v-model="newEventService.name" class="input-field" readonly>
                             </div>
+                            <div v-if="errorsS.name" class="error">{{ errorsS.name }}</div>
 
                             <div class="input-group">
                                 <label for="Title">Title:</label>
-                                <input type="text" id="Title" name="Title" v-model="newEventService.title" class="input-field">
+                                <input type="text" id="Title" name="Title" v-model="newEventService.title" class="input-field" required>
                             </div>
+                            <div v-if="errorsS.title" class="error">{{ errorsS.title }}</div>
 
                             <div style="padding-top: 15px;">
                                 <label>Type of service you provide:</label><br>
@@ -1838,51 +1896,56 @@ export default {
                                     <input type="checkbox" name="ServiceCheckBox" v-model="newEventService.serviceTypeReq" value="Pet Trainer"> Pet Trainer
                                 </label>
                             </div>
+                            <div v-if="errorsS.serviceTypeReq" class="error">{{ errorsS.serviceTypeReq }}</div>
 
                             <div style="padding-top: 15px;">
                                 <label for="SkillsExp">Skills & Past Experiences:</label><br>
-                                <textarea id="SkillsExp" name="SkillsExp" class="input-field" rows="5" v-model="newEventService.skillsExp"></textarea>
+                                <textarea id="SkillsExp" name="SkillsExp" class="input-field" rows="5" v-model="newEventService.skillsExp" style="background-color: #f2bc5c"></textarea>
                             </div>
 
                             <div class="input-group">
                                 <label for="Address">Address:</label>
-                                <input type="text" id="Address" name="Address" v-model="newEventService.address" class="input-field">
+                                <input type="text" id="Address" name="Address" v-model="newEventService.address" class="input-field" required>
                             </div>
+                            <div v-if="errorsS.address" class="error">{{ errorsS.address }}</div>
 
                             <div class="input-group">
                                 <label for="Contact">Contact number:</label>
-                                <input type="text" id="Contact" name="Contact" v-model="newEventService.contactNum" class="input-field">
+                                <input type="text" id="Contact" name="Contact" v-model="newEventService.contactNum" class="input-field" required>
                             </div>
+                            <div v-if="errorsS.contactNum" class="error">{{ errorsS.contactNum }}</div>
 
                             <div class="input-group">
                                 <label for="StartDate">Availability (start):</label>
-                                <input type="datetime-local" id="StartDate" name="StartDate" v-model="newEventService.startDateTime" class="input-field">
+                                <input type="datetime-local" id="StartDate" name="StartDate" v-model="newEventService.startDateTime" class="input-field" required>
                             </div>
+                            <div v-if="errorsS.startDateTime" class="error">{{ errorsS.startDateTime }}</div>
 
                             <div class="input-group">
                                 <label for="EndDate">Availability (end):</label>
-                                <input type="datetime-local" id="EndDate" name="EndDate" v-model="newEventService.endDateTime" class="input-field">
+                                <input type="datetime-local" id="EndDate" name="EndDate" v-model="newEventService.endDateTime" class="input-field" required>
                             </div>
+                            <div v-if="errorsS.endDateTime" class="error">{{ errorsS.endDateTime }}</div>
 
                             <div class="input-group">
                                 <label for="Payment">Rate (/hr):</label>
-                                <input type="text" id="Payment" name="Payment" v-model="newEventService.payment" class="input-field">
+                                <input type="text" id="Payment" name="Payment" v-model="newEventService.payment" class="input-field" requried>
                             </div>
+                            <div v-if="errorsS.payment" class="error">{{ errorsS.payment }}</div>
 
-                            <button type="submit" class="submit-button">Create</button>
+                            <button type="submit" class="submit-button" @click="validateFormS()">Create</button>
                         </form>
                     </div>
                 </div>
             </div>
             </div>
-            <div><button @click="getIndivEventsService(),getmyservices(),transferExpiredService(),getmypastservices()"class="reloadButton">Reload</button></div>
             <div v-if="confirmPopup" class="cfmPopup" style="display:flex;">
-                <div class="popupContent"> 
-                    <p style="color:#ECDFCC"> Would you like to submit?</p>
+                <div class="popupContent col-4 col-sm-6 col-lg-4 col-md-5"> 
+                    <p style="color:#7c321b"> Would you like to submit?</p>
                     <div style="display:flex;">
-                    <button type="submit" class="col-3" @click="showButton = false;confirmPopup=false;addService();getIndivEventsService();" style="border-radius:8px; border: 3px solid #697565;">Yes</button>
+                    <button type="submit" class="col-3" @click="showButton = false;confirmPopup=false;addService();getIndivEventsService();getmyservices();" style="border-radius:8px; border: 3px solid #7c321b;">Yes</button>
                     <div class="col-6"></div>
-                    <button class="col-3"@click="confirmPopup=false" style="border-radius:8px; border: 3px solid #697565;">No</button></div>
+                    <button class="col-3"@click="confirmPopup=false" style="border-radius:8px; border: 3px solid #7c321b;">No</button></div>
                 </div>
             </div>
 
@@ -1892,59 +1955,77 @@ export default {
         <transition :name="transitionName" mode="out-in">
         <div v-if="currentPage === 'Current Jobs'"> <!--Service Provider: Current Jobs-->
             <div style="border-bottom: 3px solid #464545; padding-bottom: 10px;"> <!--All ongoing services-->
-                <h1 style="margin-top: 10px;margin-left:5px;">Ongoing listings</h1>
-                <div class="row" style="margin-top:10px;padding-left:5px;padding-right:5px;">
-                <div v-for="(event,index) in myongoingservices" :key="index" class="col-3">
-                    <div class="card card-fixed w-100">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Listing by: {{ event.name }} <br> Listing For: {{ event.linkedPerson }}</p> 
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Required: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Payment: ${{ event.payment }} / hour</p>
-                        <p class="card-text"> Special Requirements: <br>{{ event.specialReq }}</p>
-                        <button @click="viewMore(event)">View More</button>
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">Ongoing listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in myongoingservices" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto"/>
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Listing by:</strong> {{ event.name }} <br> <strong>Listing For:</strong> {{ event.linkedPerson }}</p> 
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.specialReq }}</p>
+                        <button @click="viewMore(event)"><strong>View More</strong></button>
                     </div>
                     </div>
                 </div>
+                </div>
+                <div v-if="myongoingservices.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No ongoing listings available</strong>
                 </div>
             </div>
-            <div style="border-bottom: 3px solid #464545; padding-bottom: 10px;"> <!--All created, non expired job listings-->
-                <h1 style="margin-top: 10px;margin-left:5px;">My listings</h1>
-                <div v-for="(event,index) in myservices" :key="index" class="card col-3 card-fixed" style="display:inline-flex; margin-left:5px; border: solid 3px #000000">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Provided: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Rate: ${{ event.payment }} / hour</p>
-                        <p class="card-text">Skills & Experiences: <br>{{ event.skillsExp }}</p>
-                        <button @click="cancelService(event.documentId)">Cancel Listing</button>
+            
+
+            <div style="border-bottom: 3px solid #464545; padding-bottom: 10px;"> <!--All created, non expired service listings-->
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">My listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in myservices" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3" >
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto;" />
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.skillsExp }}</p>
+                        <button @click="cancelService(event.documentId);getmyjobs();getmypastjobs();getalljobs()">Cancel Listing</button>
                     </div>
+                    </div>
+                </div>
+                </div>
+                <div v-if="myservices.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No listings</strong>
                 </div>
             </div>
 
             <div> <!--Completed / Cancelled / Expired listings-->
-                <h1 style="margin-top: 10px;margin-left:5px;">Past listings</h1>
-                <div v-for="(event,index) in mypastservices" :key="index" class="card col-3 card-fixed" style="display:inline-flex; margin-left:5px; border: solid 3px #000000">
-                    <img :src="event.image" class="card-image" />
-                    <div class="card-body">
-                        <h3>{{ event.title }}</h3>
-                        <p class="card-text">Period of service: <br>{{ event.start }} - {{ event.end }}</p>
-                        <p class="card-text">Services Provided: <br>{{ event.serviceTypeReq.join(',') }}</p>
-                        <p class="card-text">Address: {{ event.address }}</p>
-                        <p class="card-text">Contact Number: {{ event.contactNum }}</p>
-                        <p class="card-text">Rate: ${{ event.payment }} / hour</p>
-                        <p class="card-text">Skills & Experiences <br>{{ event.skillsExp }}</p>
-                        <p class="card-text">Status: <br>{{ event.status }}</p>
+                <h1 style="margin-top: 10px;margin-left:5px;"><strong style="font-size:xx-large">Past listings</strong></h1>
+                <div class="row" style="margin-top:10px;padding-left:20px;padding-right:20px;">
+                <div v-for="(event,index) in mypastservices" :key="index" class="col-12 col-sm-12 col-md-6 col-lg-3">
+                    <div class="card card-fixed w-100" style="margin-top:5px;">
+                    <img :src="event.image" class="card-image" style="width:100%;height:auto;" />
+                    <div class="card-body" style="margin-top:2px; border-top:3px solid #7c321b">
+                        <h3><strong>{{ event.title }}</strong></h3>
+                        <p class="card-text"><strong>Period of service:</strong> <br><strong>From:</strong>{{ formatDate(event.start) }} <br><strong>To:</strong>{{ formatDate(event.end) }}</p>
+                        <p class="card-text"><strong>Services Required:</strong><br>{{ event.serviceTypeReq.join(',') }}</p>
+                        <p class="card-text"><strong>Address:</strong> {{ event.address }}</p>
+                        <p class="card-text"><strong>Contact Number:</strong> {{ event.contactNum }}</p>
+                        <p class="card-text"><strong>Payment:</strong> ${{ event.payment }} / hour</p>
+                        <p class="card-text"><strong>Special Requirements:</strong> <br>{{ event.specialReq }}</p>
+                        <p class="card-text"><strong>Status: <br>{{ event.status }}</strong></p>
+                    </div>
                     </div>
                 </div>
-                
+                </div>
+                <div v-if="mypastservices.length === 0" class="noAvailability" style="height:200px !important;">
+                <strong>No past listings</strong>
+                </div>
             </div>
 
             <div v-if="showOngoingListing" class="listing-overlay"> <!--Full screen of selected ongoing listing-->
@@ -1973,13 +2054,8 @@ export default {
                                 <p><strong>Skills & Experiences:</strong> {{ selectedEvent.skillsExp }}</p>
                                 <p><strong>Status:</strong>{{ selectedEvent.status }}</p>
                                 <div class="text-center">
-                                    <!--<button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>{{ selectedEvent.name }}'s Profile</strong></button>
-                                    <button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>{{ selectedEvent.linkedPerson }}'s Profile</strong></button>
-                                    <button style="border:1px solid #f29040;border-radius:8px;" class="m-2"><strong>Chat</strong></button>-->
-                                    <br>
-                                    <button style="border:2px solid red;border-radius:8px;" class="m-2" @click="cancelOngoingService(selectedEvent.documentId)"><strong>Cancel</strong></button>
-                                    
-                                    <button style="border:2px solid green;border-radius:8px;" class="m-2" @click="completeOngoingService(selectedEvent.documendId)"><strong>Complete</strong></button>
+                                    <button style="border:2px solid red;border-radius:8px;" class="m-2" @click="cancelOngoingService(selectedEvent.documentId);closeListing();getmyongoingservices();getmypastservices();"><strong>Cancel</strong></button>
+                                    <button style="border:2px solid green;border-radius:8px;" class="m-2" @click="completeOngoingService(selectedEvent.documentId);closeListing();getmyongoingservices();getmypastservices();"><strong>Complete</strong></button>
                                 </div>
                                 <div class="text-center mt-3">
                                     <button @click="closeListing()" class="close-btn" style="border:1px solid #f29040;border-radius:8px;"><strong>Close</strong></button>
